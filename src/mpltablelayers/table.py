@@ -17,9 +17,8 @@ import pandas as pd
 from matplotlib.axes import Axes
 from matplotlib.table import Cell, Table
 
-import snbplt.config
-import snbplt.utils
-from interceptor_registry import register_method_interceptor
+from .interceptor_registry import register_method_interceptor
+from .utils import get_text_bbox, requires_usetex, separate_kwargs
 
 __all__ = [
     "make_table",
@@ -453,18 +452,6 @@ def apply_table_range_property(
         if r_min <= r <= r_max and c_min <= c <= c_max:
             apply_table_cell_property(table, r, c, property_dict)
 
-def requires_usetex(text: str | None) -> bool:
-    """Return True if the string contains LaTeX commands that likely require `usetex=True`."""
-    if not text:
-        return False
-
-    for cmd in _LATEX_UNSUPPORTED_COMMANDS:
-        if cmd in text:
-            return True
-
-    return False
-
-
 def make_table(
     df,
     ax: Axes | None = None,
@@ -784,7 +771,7 @@ def make_table(
         plt.close(fig)
 
         # Create new fig, ax using the approximated ideal figsize
-        fig, ax = plt.subplots(figsize=(ideal_figwid)
+        fig, ax = plt.subplots(figsize=(ideal_figwidth, ideal_figheight))
         plt.sca(ax)
     else:
         fig = ax.get_figure()
@@ -966,8 +953,10 @@ def make_table(
     table.scale(1, 1.4)
     table.AXESPAD = 0
 
-    fig.add_extraspace_header(extraspace_header)
-    fig.add_extraspace_footer(extraspace_footer)
+    if hasattr(fig, "add_extraspace_header"):
+        fig.add_extraspace_header(extraspace_header)
+    if hasattr(fig, "add_extraspace_footer"):
+        fig.add_extraspace_footer(extraspace_footer)
 
     # styling
     property_applier = _construct_property_applier(**all_cell_properties)
@@ -1173,12 +1162,3 @@ def _build_header_rows(df: pd.DataFrame, header_spanning: bool, break_header_spa
     return header_rows, n_header_levels
 
 
-__all__ = [
-    "add_table_multispan_cell",
-    "apply_table_cell_property",
-    "apply_table_col_property",
-    "apply_table_range_property",
-    "apply_table_row_property",
-    "make_table",
-    "SpanCell",
-]

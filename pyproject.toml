@@ -1,8 +1,8 @@
 [project]
 name = "mpltablelayers"
 dynamic = ["version"]
-description = "Business day axis scale for matplotlib"
-keywords = ["matplotlib", "business day", "busday", "matplotlib-scale"]
+description = "Styled table layers for matplotlib"
+keywords = ["matplotlib", "table", "matplotlib-table"]
 classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
@@ -25,6 +25,7 @@ requires-python = ">=3.9"
 dependencies = [
     "matplotlib",
     "numpy",
+    "pandas",
 ]
 
 [project.urls]
