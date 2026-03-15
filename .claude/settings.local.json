@@ -1,7 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(/Users/simonniederberger/.pyenv/versions/3.13.7/bin/python3 -m pytest tests/ -v)"
-    ]
-  }
-}
