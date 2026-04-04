@@ -7,6 +7,7 @@ See Also
 
 from __future__ import annotations
 
+import functools
 import logging
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
@@ -16,7 +17,6 @@ import numpy as np
 import pandas as pd
 from matplotlib.table import Cell, Table
 
-from .interceptor_registry import register_method_interceptor
 from .utils import separate_kwargs
 
 __all__ = [
@@ -26,6 +26,7 @@ __all__ = [
     "add_table_multispan_cell",
     "apply_table_cell_property",
     "apply_table_col_property",
+    "apply_table_property",
     "apply_table_range_property",
     "apply_table_row_property",
     "resolve_header_spans",
@@ -88,7 +89,7 @@ class SpanCell(Cell):
 
     The span cell dynamically tracks changes of the anchor cells. Whenever
     either anchor cell changes its position or size, the span cell updates
-    its own bounds accordingly via registered method interceptors.
+    its own bounds accordingly.
 
     `SpanCell` instances can be modified exactly like normal `Cell`
     instances. For example, to control whether the span cell is rendered
@@ -126,15 +127,31 @@ class SpanCell(Cell):
         self.set_transform(table.get_transform())
         self._table.get_figure().add_artist(self)
 
-        # Register interceptors on all relevant anchor-cell-methods required to track the moving of the anchor cells
-        register_method_interceptor(self._cell_x0y0.set_x, self.update_bounds)
-        register_method_interceptor(self._cell_x0y0.set_y, self.update_bounds)
-        register_method_interceptor(self._cell_x1y1.set_x, self.update_bounds)
-        register_method_interceptor(self._cell_x1y1.set_width, self.update_bounds)
-        register_method_interceptor(self._cell_x1y1.set_y, self.update_bounds)
-        register_method_interceptor(self._cell_x1y1.set_height, self.update_bounds)
-        register_method_interceptor(self._cell_x0y0.set_figure, self.set_figure, pass_args=True, pass_kwargs=True)
-        register_method_interceptor(self._cell_x0y0.set_transform, self.set_transform, pass_args=True, pass_kwargs=True)
+        # Wrap anchor-cell methods so that this span cell stays in sync
+        self._hook(cell_x0y0, "set_x", self.update_bounds)
+        self._hook(cell_x0y0, "set_y", self.update_bounds)
+        self._hook(cell_x1y1, "set_x", self.update_bounds)
+        self._hook(cell_x1y1, "set_width", self.update_bounds)
+        self._hook(cell_x1y1, "set_y", self.update_bounds)
+        self._hook(cell_x1y1, "set_height", self.update_bounds)
+        self._hook(cell_x0y0, "set_figure", self.set_figure, forward_args=True)
+        self._hook(cell_x0y0, "set_transform", self.set_transform, forward_args=True)
+
+    @staticmethod
+    def _hook(obj, method_name: str, callback: Callable, *, forward_args: bool = False) -> None:
+        """Wrap a method on *obj* so that *callback* fires after each call."""
+        original = getattr(obj, method_name)
+
+        @functools.wraps(original)
+        def wrapper(*args, **kwargs):
+            result = original(*args, **kwargs)
+            if forward_args:
+                callback(*args, **kwargs)
+            else:
+                callback()
+            return result
+
+        setattr(obj, method_name, wrapper)
 
     def update_bounds(self) -> None:
         """Recompute the span cell bounds from its anchor cells."""
@@ -316,6 +333,24 @@ def _merge_with_defaults(defaults: dict, user: dict | None) -> dict:
 
     text_props = {**defaults.pop("text_props", {}), **user.pop("text_props", {})}
     return {**defaults, **user, "text_props": text_props}
+
+
+def apply_table_property(
+    table: Table,
+    property_dict: dict,
+) -> None:
+    """
+    Apply a property dictionary to every cell in the table.
+
+    Parameters
+    ----------
+    table : matplotlib.table.Table
+    property_dict : dict
+        See `apply_table_cell_property` for supported keys.
+    """
+    property_applier = _construct_property_applier(**property_dict)
+    for cell in table.get_celld().values():
+        property_applier(cell)
 
 
 def apply_table_cell_property(
