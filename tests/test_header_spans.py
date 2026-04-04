@@ -38,9 +38,14 @@ class TestResolveSingleLevel:
 
 class TestResolveMultiIndex:
     def test_basic_two_level(self):
-        idx = pd.MultiIndex.from_tuples([
-            ("A", "x"), ("A", "y"), ("B", "x"), ("B", "y"),
-        ])
+        idx = pd.MultiIndex.from_tuples(
+            [
+                ("A", "x"),
+                ("A", "y"),
+                ("B", "x"),
+                ("B", "y"),
+            ]
+        )
         spans, n = resolve_header_spans(idx)
         assert n == 2
 
@@ -57,10 +62,15 @@ class TestResolveMultiIndex:
         assert all(s.width == 1 for s in level1)
 
     def test_three_levels(self):
-        idx = pd.MultiIndex.from_tuples([
-            ("G1", "A", "x"), ("G1", "A", "y"), ("G1", "B", "x"),
-            ("G2", "A", "x"), ("G2", "A", "y"),
-        ])
+        idx = pd.MultiIndex.from_tuples(
+            [
+                ("G1", "A", "x"),
+                ("G1", "A", "y"),
+                ("G1", "B", "x"),
+                ("G2", "A", "x"),
+                ("G2", "A", "y"),
+            ]
+        )
         spans, n = resolve_header_spans(idx)
         assert n == 3
 
@@ -82,9 +92,13 @@ class TestResolveMultiIndex:
         assert all(s.width == 1 for s in spans)
 
     def test_break_span(self):
-        idx = pd.MultiIndex.from_tuples([
-            ("A", "x"), ("A", "y"), ("A", "z"),
-        ])
+        idx = pd.MultiIndex.from_tuples(
+            [
+                ("A", "x"),
+                ("A", "y"),
+                ("A", "z"),
+            ]
+        )
         spans, _ = resolve_header_spans(idx, break_span=[("A", "z")])
         level0 = [s for s in spans if s.level == 0]
 
@@ -94,9 +108,13 @@ class TestResolveMultiIndex:
         assert level0[1] == HeaderSpan(0, "A", 2, 2)
 
     def test_empty_col_does_not_break_span(self):
-        idx = pd.MultiIndex.from_tuples([
-            ("A", "x"), ("_emptycol_0", ""), ("A", "y"),
-        ])
+        idx = pd.MultiIndex.from_tuples(
+            [
+                ("A", "x"),
+                ("_emptycol_0", ""),
+                ("A", "y"),
+            ]
+        )
         spans, _ = resolve_header_spans(idx)
         level0 = [s for s in spans if s.level == 0]
 

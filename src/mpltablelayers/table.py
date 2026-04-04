@@ -142,7 +142,9 @@ class SpanCell(Cell):
         self._hook(cell_x0y0, "set_transform", self.set_transform, forward_args=True)
 
     @staticmethod
-    def _hook(obj, method_name: str, callback: Callable, *, forward_args: bool = False) -> None:
+    def _hook(
+        obj, method_name: str, callback: Callable, *, forward_args: bool = False
+    ) -> None:
         """Wrap a method on *obj* so that *callback* fires after each call."""
         original = getattr(obj, method_name)
 
@@ -181,7 +183,9 @@ def _expand_indexlike_types(items) -> list:
     return expanded_items
 
 
-def _int_or_indexpos(item: Any, index: pd.Index | pd.MultiIndex, enforce_unique=False) -> list[int]:
+def _int_or_indexpos(
+    item: Any, index: pd.Index | pd.MultiIndex, enforce_unique=False
+) -> list[int]:
     # unwrap Index-like containers
     if hasattr(item, "to_list"):
         item_list = item.to_list()
@@ -203,7 +207,9 @@ def _int_or_indexpos(item: Any, index: pd.Index | pd.MultiIndex, enforce_unique=
             return [loc]
 
         if enforce_unique:
-            raise ValueError(f"Index position for '{item}' not unique. Try integer indexing.")
+            raise ValueError(
+                f"Index position for '{item}' not unique. Try integer indexing."
+            )
 
         # duplicate contiguous entries
         if isinstance(loc, slice):
@@ -293,7 +299,9 @@ def add_table_multispan_cell(
     x1y1_cell = table.get_celld()[(y1, x1)]
 
     cell_kwargs, set_kwargs = separate_kwargs([Cell], **kwargs)
-    span_cell = SpanCell(table, x0y0_cell, x1y1_cell, facecolor=facecolor, **cell_kwargs)
+    span_cell = SpanCell(
+        table, x0y0_cell, x1y1_cell, facecolor=facecolor, **cell_kwargs
+    )
     span_cell.set(zorder=zorder, linewidth=linewidth, **set_kwargs)
     return span_cell
 
@@ -317,7 +325,9 @@ def _construct_property_applier(
             cell.visible_edges = visible_edges
         if custom_modifiers is not None:
             for modifier in _ensure_list(custom_modifiers):
-                assert isinstance(modifier, Callable), f"passed custom modifier must be a callable. Got {modifier}"
+                assert isinstance(modifier, Callable), (
+                    f"passed custom modifier must be a callable. Got {modifier}"
+                )
                 modifier(cell)
         if height_scaling is not None:
             cell.set_height(cell.get_height() * height_scaling)
@@ -576,13 +586,20 @@ def resolve_header_spans(
                 should_start_new = True
             elif level > 0 and prev_non_empty_j is not None:
                 for parent in range(level):
-                    if level_values[parent][j] != level_values[parent][prev_non_empty_j]:
+                    if (
+                        level_values[parent][j]
+                        != level_values[parent][prev_non_empty_j]
+                    ):
                         should_start_new = True
                         break
 
             if should_start_new:
                 if current_label is not None:
-                    spans.append(HeaderSpan(level, str(current_label), current_start, current_end))
+                    spans.append(
+                        HeaderSpan(
+                            level, str(current_label), current_start, current_end
+                        )
+                    )
                 current_start = j
                 current_label = values[j]
 
@@ -590,7 +607,9 @@ def resolve_header_spans(
             prev_non_empty_j = j
 
         if current_label is not None:
-            spans.append(HeaderSpan(level, str(current_label), current_start, current_end))
+            spans.append(
+                HeaderSpan(level, str(current_label), current_start, current_end)
+            )
 
     return spans, n_levels
 

@@ -14,12 +14,14 @@ import mpltablelayers as mtl
 # %%
 # Define a MultiIndex with two groups
 
-columns = pd.MultiIndex.from_tuples([
-    ("Revenue", "Q1"),
-    ("Revenue", "Q2"),
-    ("Costs", "Q1"),
-    ("Costs", "Q2"),
-])
+columns = pd.MultiIndex.from_tuples(
+    [
+        ("Revenue", "Q1"),
+        ("Revenue", "Q2"),
+        ("Costs", "Q1"),
+        ("Costs", "Q2"),
+    ]
+)
 
 data = [
     ["100", "120", "80", "90"],
