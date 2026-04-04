@@ -48,8 +48,8 @@ to provide a `to_list()` method.
 """
 
 
-linewidth =1
-linewidth_bottom =1
+linewidth = 1
+linewidth_bottom = 1
 
 
 class SpanCell(Cell):
@@ -106,8 +106,18 @@ class SpanCell(Cell):
         register_method_interceptor(self._cell_x1y1.set_width, self.update_bounds)
         register_method_interceptor(self._cell_x1y1.set_y, self.update_bounds)
         register_method_interceptor(self._cell_x1y1.set_height, self.update_bounds)
-        register_method_interceptor(self._cell_x0y0.set_figure, self.set_figure, pass_args=True, pass_kwargs=True)
-        register_method_interceptor(self._cell_x0y0.set_transform, self.set_transform, pass_args=True, pass_kwargs=True)
+        register_method_interceptor(
+            self._cell_x0y0.set_figure,
+            self.set_figure,
+            pass_args=True,
+            pass_kwargs=True,
+        )
+        register_method_interceptor(
+            self._cell_x0y0.set_transform,
+            self.set_transform,
+            pass_args=True,
+            pass_kwargs=True,
+        )
 
     def update_bounds(self) -> None:
         """Recompute the span cell bounds from its anchor cells."""
@@ -133,7 +143,9 @@ def _expand_indexlike_types(items) -> list:
     return expanded_items
 
 
-def _int_or_indexpos(item: Any, index: pd.Index | pd.MultiIndex, enforce_unique=False) -> list[int]:
+def _int_or_indexpos(
+    item: Any, index: pd.Index | pd.MultiIndex, enforce_unique=False
+) -> list[int]:
     # unwrap Index-like containers
     if hasattr(item, "to_list"):
         item_list = item.to_list()
@@ -155,7 +167,9 @@ def _int_or_indexpos(item: Any, index: pd.Index | pd.MultiIndex, enforce_unique=
             return [loc]
 
         if enforce_unique:
-            raise ValueError(f"Index position for '{item}' not unique. Try integer indexing.")
+            raise ValueError(
+                f"Index position for '{item}' not unique. Try integer indexing."
+            )
 
         # duplicate contiguous entries
         if isinstance(loc, slice):
@@ -245,7 +259,9 @@ def add_table_multispan_cell(
     x1y1_cell = table.get_celld()[(y1, x1)]
 
     cell_kwargs, set_kwargs = separate_kwargs([Cell], **kwargs)
-    span_cell = SpanCell(table, x0y0_cell, x1y1_cell, facecolor=facecolor, **cell_kwargs)
+    span_cell = SpanCell(
+        table, x0y0_cell, x1y1_cell, facecolor=facecolor, **cell_kwargs
+    )
     span_cell.set(zorder=zorder, linewidth=linewidth, **set_kwargs)
     return span_cell
 
@@ -304,7 +320,9 @@ def _construct_property_applier(
             cell.visible_edges = visible_edges
         if custom_modifiers is not None:
             for modifier in _ensure_list(custom_modifiers):
-                assert isinstance(modifier, Callable), f"passed custom modifier must be a callable. Got {modifier}"
+                assert isinstance(modifier, Callable), (
+                    f"passed custom modifier must be a callable. Got {modifier}"
+                )
                 modifier(cell)
         if height_scaling is not None:
             cell.set_height(cell.get_height() * height_scaling)
@@ -452,6 +470,7 @@ def apply_table_range_property(
         if r_min <= r <= r_max and c_min <= c <= c_max:
             apply_table_cell_property(table, r, c, property_dict)
 
+
 def make_table(
     df,
     ax: Axes | None = None,
@@ -461,11 +480,15 @@ def make_table(
     bold_header_levels: Sequence[int] | None = None,
     header_spanning: bool = True,
     break_header_span: col | Sequence[col] | None = None,
-    span_cells: Sequence[tuple[row_col, width, height] | tuple[row_col, width, height, PropertyDict]] | None = None,
+    span_cells: Sequence[
+        tuple[row_col, width, height] | tuple[row_col, width, height, PropertyDict]
+    ]
+    | None = None,
     table_properties: TablePropertyDict | None = None,
     row_properties: Sequence[tuple[row | Sequence[row], PropertyDict]] | None = None,
     col_properties: Sequence[tuple[col | Sequence[col], PropertyDict]] | None = None,
-    cell_properties: Sequence[tuple[row_col | Sequence[row_col], PropertyDict]] | None = None,
+    cell_properties: Sequence[tuple[row_col | Sequence[row_col], PropertyDict]]
+    | None = None,
     all_cell_properties: PropertyDict | None = None,
     body_cell_properties: PropertyDict | None = None,
     header_cell_properties: PropertyDict | None = None,
@@ -759,7 +782,9 @@ def make_table(
       or as a sequence of elements. When a sequence is provided, the specified
       operation or styling is applied to all referenced rows, columns, or cells._property)
     """
-    assert not isinstance(df.index, pd.MultiIndex), "Currently no support for MultiIndex in the Rows"
+    assert not isinstance(df.index, pd.MultiIndex), (
+        "Currently no support for MultiIndex in the Rows"
+    )
     # Catch all function input in raw version. This MUST be at the beginning of the funciton.
     raw_fuction_inputs = locals().copy()
 
@@ -793,8 +818,7 @@ def make_table(
         loc="upper left",
         edges="B",
     )
-    default_cell_properties = dict(
-    )
+    default_cell_properties = dict()
     default_body_cell_properties = dict()
     default_header_properties = dict(
         text_props=dict(ha="left", va="bottom"),
@@ -814,11 +838,21 @@ def make_table(
     )
 
     table_properties = _merge_with_defaults(default_table_properties, table_properties)
-    all_cell_properties = _merge_with_defaults(default_cell_properties, all_cell_properties)
-    body_cell_properties = _merge_with_defaults(default_body_cell_properties, body_cell_properties)
-    header_cell_properties = _merge_with_defaults(default_header_properties, header_cell_properties)
-    title_row_properties = _merge_with_defaults(default_title_row_properties, title_row_properties)
-    row_label_properties = _merge_with_defaults(default_row_label_properties, row_label_properties)
+    all_cell_properties = _merge_with_defaults(
+        default_cell_properties, all_cell_properties
+    )
+    body_cell_properties = _merge_with_defaults(
+        default_body_cell_properties, body_cell_properties
+    )
+    header_cell_properties = _merge_with_defaults(
+        default_header_properties, header_cell_properties
+    )
+    title_row_properties = _merge_with_defaults(
+        default_title_row_properties, title_row_properties
+    )
+    row_label_properties = _merge_with_defaults(
+        default_row_label_properties, row_label_properties
+    )
 
     # compared to charts we want less space below the header, thus we
     # remove the default-space, which turned out to give good results
@@ -880,7 +914,9 @@ def make_table(
 
     # Insert empty cols
     j = 0
-    for i, col in enumerate(sorted(get_colindex(_ensure_list(empty_cols), original_column_mapping))):
+    for i, col in enumerate(
+        sorted(get_colindex(_ensure_list(empty_cols), original_column_mapping))
+    ):
         insert_at = col + j
         df.insert(loc=insert_at, column=f"_emptycol_{i}", value=None)
         original_column_mapping.insert(insert_at, False)
@@ -891,17 +927,23 @@ def make_table(
     _break_header_span = []
     for breakpoint in _ensure_list(break_header_span):
         if isinstance(breakpoint, int):
-            assert breakpoint >= 0, f"Cannot break span at negative position {breakpoint}"
+            assert breakpoint >= 0, (
+                f"Cannot break span at negative position {breakpoint}"
+            )
             _break_header_span.append(df_orig.columns[breakpoint])
         else:
             _break_header_span.append(breakpoint)
     break_header_span = _break_header_span
-    header_rows, n_header_levels = _build_header_rows(df, header_spanning, break_header_span)
+    header_rows, n_header_levels = _build_header_rows(
+        df, header_spanning, break_header_span
+    )
 
     # Insert Additional Elements
     # Normalize title_rows
     title_rows = _ensure_list(title_rows)
-    title_rows.sort(key=lambda x: _int_or_indexpos(x[0], df_orig.index, enforce_unique=True)[0])
+    title_rows.sort(
+        key=lambda x: _int_or_indexpos(x[0], df_orig.index, enforce_unique=True)[0]
+    )
     # --------------------
     # Format body
     # --------------------
@@ -996,7 +1038,9 @@ def make_table(
     ## title rows
 
     for title_row, (title_text, title_properties) in title_lookup.items():
-        multispan_cell_kwargs = _merge_with_defaults(title_row_properties, title_properties)
+        multispan_cell_kwargs = _merge_with_defaults(
+            title_row_properties, title_properties
+        )
 
         text_props = multispan_cell_kwargs.pop("text_props")
         pad = multispan_cell_kwargs.pop("pad")
@@ -1010,7 +1054,9 @@ def make_table(
         height = 1
         width = len(df.columns) + 1  # data-cols + row-labels
 
-        span_cell = add_table_multispan_cell(table, (y0, x0), width, height, text=title_text, **multispan_cell_kwargs)
+        span_cell = add_table_multispan_cell(
+            table, (y0, x0), width, height, text=title_text, **multispan_cell_kwargs
+        )
         span_cell.set_text_props(**text_props)
         span_cell.PAD = pad
         for modifier in custom_modifiers:
@@ -1090,10 +1136,16 @@ def _build_header_rows(df: pd.DataFrame, header_spanning: bool, break_header_spa
         col_tuples = list(df.columns)
 
         # cache all level values once to avoid repeated lookups
-        level_values = [df.columns.get_level_values(level).tolist() for level in range(n_header_levels)]
+        level_values = [
+            df.columns.get_level_values(level).tolist()
+            for level in range(n_header_levels)
+        ]
 
         # Identify which columns are artificial empty columns
-        emptycol_mask = [isinstance(col[0], str) and col[0].startswith("_emptycol") for col in col_tuples]
+        emptycol_mask = [
+            isinstance(col[0], str) and col[0].startswith("_emptycol")
+            for col in col_tuples
+        ]
 
         for level in range(n_header_levels):
             values = level_values[level].copy()
@@ -1122,7 +1174,10 @@ def _build_header_rows(df: pd.DataFrame, header_spanning: bool, break_header_spa
                     parent_break = False
                     if level > 0 and j > 0:
                         for parent_level in range(level):
-                            if level_values[parent_level][j] != level_values[parent_level][j - 1]:
+                            if (
+                                level_values[parent_level][j]
+                                != level_values[parent_level][j - 1]
+                            ):
                                 parent_break = True
                                 break
 
@@ -1160,5 +1215,3 @@ def _build_header_rows(df: pd.DataFrame, header_spanning: bool, break_header_spa
         n_header_levels = 1
 
     return header_rows, n_header_levels
-
-

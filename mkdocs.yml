@@ -1,5 +1,5 @@
 site_name: mpltablelayers
-site_description: Matplotlib Business Day Axis Scale
+site_description: Styled overlay layers for matplotlib tables
 site_author: Simon Niederberger
 site_url: https://saemeon.github.io/mpltablelayers/
 
@@ -80,6 +80,7 @@ markdown_extensions:
   # tabbed content (e.g. variants of code)
   - pymdownx.tabbed:
       alternate_style: true
+  - pymdownx.arithmatex
 
 plugins:
   - search
@@ -118,6 +119,8 @@ plugins:
       gallery_dirs: docs/generated/gallery
       within_subsection_order: FileNameSortKey
 
+extra_javascript:
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
 extra_css:
   - assets/extra.css
 
