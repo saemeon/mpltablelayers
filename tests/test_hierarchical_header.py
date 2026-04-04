@@ -5,8 +5,6 @@ import pytest
 
 from mpltablelayers import SpanCell, add_hierarchical_header
 
-matplotlib.use("Agg")
-
 
 @pytest.fixture
 def table_for_header():

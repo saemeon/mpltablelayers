@@ -33,8 +33,12 @@ columns = pd.MultiIndex.from_tuples([
 
 fig, ax = plt.subplots()
 ax.axis("off")
+
+# 2 blank header rows (one per MultiIndex level) + 2 data rows
+header_rows = [[""] * 4] * columns.nlevels
+data = [["100", "120", "80", "90"], ["110", "130", "85", "95"]]
 table = ax.table(
-    cellText=[["100", "120", "80", "90"], ["110", "130", "85", "95"]],
+    cellText=header_rows + data,
     cellLoc="right",
     loc="upper left",
 )

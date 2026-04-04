@@ -10,8 +10,6 @@ from mpltablelayers import (
     apply_table_row_property,
 )
 
-matplotlib.use("Agg")
-
 
 @pytest.fixture
 def table():

@@ -4,8 +4,6 @@ import pytest
 
 from mpltablelayers import SpanCell, add_table_multispan_cell
 
-matplotlib.use("Agg")
-
 
 @pytest.fixture
 def table_and_fig():

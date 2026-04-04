@@ -28,11 +28,14 @@ columns = pd.MultiIndex.from_tuples([
     ("Costs", "Q1"), ("Costs", "Q2"),
 ])
 
-# Build a table
+# Build a table with blank header rows + data rows
 fig, ax = plt.subplots()
 ax.axis("off")
+
+header_rows = [[""] * 4] * columns.nlevels  # one row per level
+data = [["100", "120", "80", "90"], ["110", "130", "85", "95"]]
 table = ax.table(
-    cellText=[["100", "120", "80", "90"], ["110", "130", "85", "95"]],
+    cellText=header_rows + data,
     cellLoc="right",
     loc="upper left",
 )

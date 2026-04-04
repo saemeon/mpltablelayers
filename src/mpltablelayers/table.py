@@ -83,9 +83,13 @@ class HeaderSpan:
 class SpanCell(Cell):
     """A table cell that spans a rectangular region defined by two anchor cells.
 
-    `SpanCell` derives its position and size from two existing table cells:
-    - `cell_x0y0` defines the top-left corner of the spanned region.
-    - `cell_x1y1` defines the bottom-right corner of the spanned region.
+    `SpanCell` derives its position and size from two existing table cells.
+    In matplotlib's table indexing (row 0 at the top, increasing downward):
+
+    - `cell_x0y0` defines the bottom-left corner of the spanned region
+      (highest row index, lowest column index).
+    - `cell_x1y1` defines the upper-right corner of the spanned region
+      (lowest row index, highest column index).
 
     The span cell dynamically tracks changes of the anchor cells. Whenever
     either anchor cell changes its position or size, the span cell updates
@@ -525,7 +529,8 @@ def resolve_header_spans(
     >>> [(s.label, s.start_col, s.width) for s in spans if s.width > 1]
     [('A', 0, 2), ('B', 2, 2)]
     """
-    break_span = _ensure_list(break_span) if break_span else []
+    break_span = _ensure_list(break_span) if break_span is not None else []
+    break_keys = set(_expand_indexlike_types(break_span))
 
     def _is_empty_col(label) -> bool:
         return isinstance(label, str) and label.startswith(empty_col_prefix)
@@ -567,7 +572,7 @@ def resolve_header_spans(
                 should_start_new = True
             elif values[j] != current_label:
                 should_start_new = True
-            elif col_tuples[j] in _expand_indexlike_types(break_span):
+            elif col_tuples[j] in break_keys:
                 should_start_new = True
             elif level > 0 and prev_non_empty_j is not None:
                 for parent in range(level):
@@ -695,7 +700,7 @@ def add_hierarchical_header(
         pad = props.pop("pad", None)
         height_scaling = props.pop("height_scaling", None)
         visible_edges = props.pop("visible_edges", None)
-        custom_modifiers = props.pop("custom_modifiers", [])
+        custom_modifiers = props.pop("custom_modifiers", None)
 
         span_cell = add_table_multispan_cell(
             table, (table_row, table_col), span.width, 1, text=span.label, **props
@@ -712,8 +717,9 @@ def add_hierarchical_header(
                 cell = table.get_celld().get((table_row, table_col + col_offset))
                 if cell is not None:
                     cell.set_height(cell.get_height() * height_scaling)
-        for modifier in _ensure_list(custom_modifiers):
-            modifier(span_cell)
+        if custom_modifiers:
+            for modifier in _ensure_list(custom_modifiers):
+                modifier(span_cell)
 
         span_cells.append(span_cell)
 
