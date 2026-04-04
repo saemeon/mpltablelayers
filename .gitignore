@@ -158,3 +158,6 @@ cython_debug/
 .python-version
 
 notes.md
+
+# auto-generated version file (setuptools-scm)
+src/mpltablelayers/_version.py
