@@ -134,7 +134,8 @@ class SpanCell(Cell):
         self.set_transform(table.get_transform())
         self._table.get_figure().add_artist(self)
 
-        # Register interceptors on all relevant anchor-cell-methods required to track the moving of the anchor cells
+        # Register interceptors on all relevant anchor-cell-methods
+        # required to track the moving of the anchor cells
         register_method_interceptor(self._cell_x0y0.set_x, self.update_bounds)
         register_method_interceptor(self._cell_x0y0.set_y, self.update_bounds)
         register_method_interceptor(self._cell_x1y1.set_x, self.update_bounds)
@@ -220,8 +221,9 @@ def _int_or_indexpos(
 def _list_index_strict(lst, value):
     """Find the index of an element in a list.
 
-    Compared to `lst.index(value)` this function does not only compare by `==` but also
-    the type. This is relevant to get the first position of 0 in a list with False values.
+    Compared to `lst.index(value)` this function does not only compare
+    by `==` but also the type. This is relevant to get the first
+    position of 0 in a list with False values.
     """
     return next(i for i, v in enumerate(lst) if v == value and type(v) is type(value))
 
@@ -591,7 +593,7 @@ def make_table(
         Target axes. If None, a new figure and axes are created
         with automatic figsize.
 
-    title_rows : Sequence[tuple[row, str] | tuple[row, str, PropertyDict]] | None, optional
+    title_rows : Sequence[tuple] | None, optional
         Insert full-width title rows before the specified data row.
 
         Each entry must be:
@@ -667,7 +669,7 @@ def make_table(
         plt.make_table(df, break_header_span=[("A", "L2")])
         ```
 
-    span_cells : Sequence[tuple[row_col, width, height] | tuple[row_col, width, height, PropertyDict]] | None, optional
+    span_cells : Sequence[tuple] | None, optional
         Additional span cells.
 
         Each entry must be:
@@ -727,7 +729,7 @@ def make_table(
         ```
 
 
-    cell_properties : Sequence[tuple[row_col | Sequence[row_col], PropertyDict]] | None, optional
+    cell_properties : Sequence[tuple] | None, optional
         Cell-level styling.
 
         Each entry must be:
@@ -800,14 +802,30 @@ def make_table(
 
     Each property dictionary may contain the following keys:
 
-    | Property | Description |
-    |-----------|------------|
-    | `text_props` | Forwards text styling to `cell.set_text_props(**text_props)`.<br>Example: `{"text_props": {"weight": "bold", "ha": "right"}}` |
-    | `pad` | Sets internal cell padding via `cell.PAD = pad`.<br>Example: `{"pad": 0.2}` |
-    | `height_scaling` | Multiplies the current cell height using `cell.set_height(cell.get_height() * x)`.<br>Example: `{"height_scaling": 1.4}` |
-    | `visible_edges` | Controls which cell borders are visible via `cell.visible_edges`.<br>Example: `{"visible_edges": "L"}` |
-    | `custom_modifiers` | Executes one or more callables on the cell after other properties are applied.<br>Example: `{"custom_modifiers": [lambda c: c.set_edgecolor("red")]}` |
-    | Any other keyword | Forwarded directly to `cell.set(**kwargs)` and therefore supports all native `matplotlib.table.Cell` properties. For the complete list of supported properties, refer to https://matplotlib.org/stable/api/table_api.html#matplotlib.table.Cell.set. <br>Example: `{"facecolor": "lightgrey", "linewidth": 0.8}` |
+    ``text_props``
+        Forwards text styling to
+        ``cell.set_text_props(**text_props)``.
+        Example: ``{"text_props": {"weight": "bold"}}``
+    ``pad``
+        Sets internal cell padding via ``cell.PAD = pad``.
+        Example: ``{"pad": 0.2}``
+    ``height_scaling``
+        Multiplies the current cell height using
+        ``cell.set_height(cell.get_height() * x)``.
+        Example: ``{"height_scaling": 1.4}``
+    ``visible_edges``
+        Controls which cell borders are visible via
+        ``cell.visible_edges``.
+        Example: ``{"visible_edges": "L"}``
+    ``custom_modifiers``
+        Executes one or more callables on the cell after
+        other properties are applied.
+        Example: ``{"custom_modifiers": [lambda c: ...]}``
+    Any other keyword
+        Forwarded directly to ``cell.set(**kwargs)`` and
+        therefore supports all native
+        ``matplotlib.table.Cell`` properties.
+        Example: ``{"facecolor": "lightgrey"}``
 
     Header Spanning Behaviour
     -------------------------
@@ -820,7 +838,8 @@ def make_table(
         respects hierarchical boundaries.
     - The lowest header level never spans;
     - `break_header_span` specifies column keys where a span should be
-      explicitly broken. **Important**: The span is broken *to the left* of the specified column.
+      explicitly broken. **Important**: The span is broken
+      *to the left* of the specified column.
 
     Notes
     -----
@@ -828,17 +847,20 @@ def make_table(
         - When used as a column reference, -1 refers to the index column.
         - When used as a row reference, negative integers refer to header rows,
           where -1 denotes the header row closest to the table body.
-    - Strings refer to label-based references from the original DataFrame index or columns.
+    - Strings refer to label-based references from the original
+      DataFrame index or columns.
     - Passed property dictionaries override sensible defaults.
     - Most parameters that accept row, column, cell, or span selectors support
       multiple elements. A selector may be provided either as a single element
       or as a sequence of elements. When a sequence is provided, the specified
-      operation or styling is applied to all referenced rows, columns, or cells._property)
+      operation or styling is applied to all referenced
+      rows, columns, or cells._property)
     """
     assert not isinstance(df.index, pd.MultiIndex), (
         "Currently no support for MultiIndex in the Rows"
     )
-    # Catch all function input in raw version. This MUST be at the beginning of the funciton.
+    # Catch all function input in raw version.
+    # This MUST be at the beginning of the function.
     raw_fuction_inputs = locals().copy()
 
     # If no ax is passed, we create a figure in a reasonable size
@@ -917,8 +939,9 @@ def make_table(
     df = df.copy()
 
     # list that initially stores all column pos as int. Later we insert elements into
-    # this list, which moves these integers and allows to compare value vs list.index(value)
-    # to find the position of a column in the original dataframe in the new dataframe
+    # this list, which moves these integers and allows to compare
+    # value vs list.index(value) to find the position of a column
+    # in the original dataframe in the new dataframe
     original_column_mapping = list(range(len(df.columns)))
 
     def get_rowindex(items, original_index_mapping) -> list:
@@ -936,7 +959,8 @@ def make_table(
             # negative values refer to the header rows and are not part of the dataframe
             if item < 0:
                 assert -item <= n_header_levels, (
-                    f"You tried to use index {item}, however, there are only {n_header_levels} header levels. "
+                    f"You tried to use index {item}, however, "
+                    f"there are only {n_header_levels} header levels. "
                 )
                 item_idx = n_header_levels + item
 
@@ -1082,7 +1106,8 @@ def make_table(
         if row in _ensure_list(bold_header_levels):
             cell.set_text_props(weight="bold")
 
-        # no vertical line for row-label column and for merged header cells (sets text = "")
+        # no vertical line for row-label column and for
+        # merged header cells (sets text = "")
         if col == -1 or cell.get_text().get_text() == "":
             cell.visible_edges = ""
         else:

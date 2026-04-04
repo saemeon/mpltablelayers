@@ -67,7 +67,9 @@ def separate_kwargs(
     functions: list[Callable],
     **kwargs,
 ) -> tuple[dict[str, Any], ...]:
-    """Separate set of keyword arguments into keywords accepted by a list of functions,  allowing to map pooled kwargs to a list of functions.
+    """Separate keyword arguments into those accepted by each function.
+
+    This allows mapping pooled kwargs to a list of functions.
 
     Parameters
     ----------
@@ -220,13 +222,15 @@ def strip_lang_suffix(input_string: str, fallback="en") -> tuple[str, str]:
     -------
     tuple
         - The stripped string (without the language suffix).
-        - The language code (e.g., 'de', 'en', 'it', 'fr') if a suffix was found, or None if not.
+        - The language code (e.g., 'de', 'en', 'it', 'fr')
+          if a suffix was found, or None if not.
 
     Examples
     --------
     - `strip_lang_suffix("example_de")`  # Output: ("example", "de")
     - `strip_lang_suffix("example_en")`  # Output: ("example", "en")
-    - `strip_lang_suffix("example")`     # Output: ("example", "en"),  since "en" is set as fallback
+    - `strip_lang_suffix("example")`     # Output: ("example", "en"),
+      since "en" is set as fallback
     """
     # Define possible suffixes
     suffixes = ["_de", "_en", "_it", "_fr"]
@@ -314,7 +318,10 @@ _LATEX_UNSUPPORTED_COMMANDS = {
 
 
 def requires_usetex(text: str | None) -> bool:
-    """Return True if the string contains LaTeX commands that likely require `usetex=True`."""
+    """Return True if the string contains LaTeX commands.
+
+    Checks for commands that likely require ``usetex=True``.
+    """
     if not text:
         return False
 
@@ -326,7 +333,7 @@ def requires_usetex(text: str | None) -> bool:
 
 
 def _patch_method(set_obj, get_obj, set_name: str, get_name: str | None = None) -> None:
-    """Bind a method from one object/class to another object under a given attribute name.
+    """Bind a method from one object/class to another object.
 
     Parameters
     ----------
@@ -337,14 +344,16 @@ def _patch_method(set_obj, get_obj, set_name: str, get_name: str | None = None) 
     set_name : str
         Attribute name to set on ``set_obj`` (e.g. ``'set_title'``).
     get_name : str, optional
-        Method name to retrieve from ``get_obj``. Defaults to ``set_name`` if not provided.
+        Method name to retrieve from ``get_obj``.
+        Defaults to ``set_name`` if not provided.
 
     Notes
     -----
-    ``__get__(instance, owner)`` invokes the descriptor protocol, binding the unbound method
-    to ``set_obj`` as if it were defined on ``type(set_obj)``. This correctly handles all
-    descriptor types (plain functions, classmethods, etc.) and is the mechanism Python itself
-    uses internally when accessing methods on an instance.
+    ``__get__(instance, owner)`` invokes the descriptor protocol,
+    binding the unbound method to ``set_obj`` as if it were defined
+    on ``type(set_obj)``. This correctly handles all descriptor types
+    (plain functions, classmethods, etc.) and is the mechanism Python
+    itself uses internally when accessing methods on an instance.
     """
     if get_name is None:
         get_name = set_name
@@ -354,7 +363,9 @@ def _patch_method(set_obj, get_obj, set_name: str, get_name: str | None = None) 
 
 
 class MethodProxy:
-    """Proxy that forwards method calls to a specified class, passing a given instance as self.
+    """Proxy that forwards method calls to a specified class.
+
+    Passes a given instance as self.
 
     This allows calling methods of a parent or sibling class on an instance,
     bypassing any overrides defined on the instance's own class.
@@ -378,5 +389,8 @@ class MethodProxy:
         self._cls = cls
 
     def __getattr__(self, name: str) -> functools.partial[Any]:
-        """Look up ``name`` on the proxied class and return it bound to the wrapped instance."""
+        """Look up ``name`` on the proxied class.
+
+        Return it bound to the wrapped instance.
+        """
         return functools.partial(getattr(self._cls, name), self._instance)

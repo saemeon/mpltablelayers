@@ -49,7 +49,7 @@ def _trigger_hook(
 
 
 def _call_if_is_callable(obj):
-    """Call `obj` if it is callable and return it's return value, otherwise return it unchanged."""
+    """Call `obj` if callable and return its value, else unchanged."""
     if callable(obj):
         return obj()
     return obj
@@ -296,7 +296,10 @@ def deregister_method_interceptor(method, id) -> None:
 
     Examples
     --------
-    >>> from  interceptor_registry import register_method_interceptor, deregister_method_interceptor
+    >>> from interceptor_registry import (
+    ...     register_method_interceptor,
+    ...     deregister_method_interceptor,
+    ... )
 
     >>> class Foo:
     ...     def bar(self):
