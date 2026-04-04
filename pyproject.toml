@@ -16,28 +16,20 @@ classifiers = [
 readme = "README.md"
 license = "BSD-3-Clause"
 authors = [
-    {name = "Simon Niederberger", email = "s.niederberger@hotmail.com"}
+    { name = "Simon Niederberger", email = "s.niederberger@hotmail.com" },
 ]
 maintainers = [
-    {name = "Simon Niederberger", email = "s.niederberger@hotmail.com"}
+    { name = "Simon Niederberger", email = "s.niederberger@hotmail.com" },
 ]
 requires-python = ">=3.9"
-dependencies = [
-    "matplotlib",
-    "numpy",
-    "pandas",
-]
+dependencies = ["matplotlib", "numpy", "pandas"]
 
 [project.urls]
 Homepage = "https://saemeon.github.io/mpltablelayers/"
 Repository = "https://github.com/saemeon/mpltablelayers"
 
 [project.optional-dependencies]
-test = [
-    "pandas",
-    "pytest",
-    "pytest-cov",
-]
+test = ["pandas", "pytest", "pytest-cov"]
 doc = [
     "mkdocs",
     "mkdocs-material",
@@ -47,6 +39,7 @@ doc = [
 ]
 dev = [
     "ruff",
+    "ty",
     "pandas",
     "prek",
     "pytest",
@@ -72,13 +65,22 @@ version = { attr = "mpltablelayers._version.__version__" }
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = "--cov=src/mpltablelayers --cov-report=term-missing"
+
+[tool.ty.src]
+include = ["src"]
+
+[tool.ty.rules]
+unresolved-import = "warn"
 
 [tool.ruff]
 line-length = 88
+target-version = "py39"
+exclude = ["src/mpltablelayers/_version.py"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]
-ignore = ["E501"]
+ignore = ["E203"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

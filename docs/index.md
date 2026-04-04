@@ -1,12 +1,18 @@
 # mpltablelayers
 
-Styled table layers for matplotlib.
+**mpltablelayers** adds styled overlay layers on top of
+[matplotlib](https://matplotlib.org/stable/api/table_api.html),
+[blume](https://github.com/swfiua/blume), and
+[plottable](https://github.com/znstrider/plottable) tables.
 
-**mpltablelayers** provides composable primitives for building publication-quality
-tables on top of `matplotlib.table`:
+## Features
 
-- **SpanCell** -- cells that span rectangular regions, dynamically tracking anchor cells
+- **Background / Foreground shading** -- color rectangular regions behind or in front of cells
+- **Span text** -- text labels that span multiple columns or rows
 - **Hierarchical headers** -- automatic MultiIndex-aware header construction with per-span styling
+- **LaTeX cells** -- math-mode content rendered with MathJax or `usetex`
+- **Arrow annotations** -- arrows pointing to individual cells with labels
+- **Circle / ellipse highlights** -- outline a cell or a group of cells
 - **Property application** -- consistent styling at the table, row, column, cell, or range level
 
 ## Installation
@@ -15,69 +21,55 @@ tables on top of `matplotlib.table`:
 pip install mpltablelayers
 ```
 
-## Quick start
+## Quickstart
 
 ```python
 import matplotlib.pyplot as plt
 import pandas as pd
+import mpltablelayers
+
+df = pd.DataFrame({"A": [1, 2], "B": [3, 4]})
+
+fig, ax = plt.subplots(figsize=(4, 2))
+ax.axis("off")
+table = ax.table(cellText=df.values.tolist(), colLabels=df.columns.tolist(), loc="center")
+
+# shade the first data row
+mpltablelayers.add_table_multispan_cell(table, y0x0=(1, 0), width=2, height=1, facecolor="#d4e6f1")
+plt.tight_layout()
+plt.show()
+```
+
+## Hierarchical headers
+
+`resolve_header_spans` analyzes a `pd.MultiIndex` and returns `HeaderSpan`
+objects describing which columns should be merged at each level.
+`add_hierarchical_header` creates styled `SpanCell` overlays from those spans:
+
+```python
 import mpltablelayers as mtl
 
-# Create a MultiIndex
 columns = pd.MultiIndex.from_tuples([
     ("Revenue", "Q1"), ("Revenue", "Q2"),
     ("Costs", "Q1"), ("Costs", "Q2"),
 ])
 
-# Build a table with blank header rows + data rows
 fig, ax = plt.subplots()
 ax.axis("off")
 
-header_rows = [[""] * 4] * columns.nlevels  # one row per level
+header_rows = [[""] * 4] * columns.nlevels
 data = [["100", "120", "80", "90"], ["110", "130", "85", "95"]]
-table = ax.table(
-    cellText=header_rows + data,
-    cellLoc="right",
-    loc="upper left",
-)
+table = ax.table(cellText=header_rows + data, cellLoc="right", loc="upper left")
 
-# Add hierarchical header with styled spans
 mtl.add_hierarchical_header(
     table, columns,
     default_properties={"facecolor": "lightblue", "text_props": {"weight": "bold"}},
     label_properties={"Costs": {"facecolor": "lightyellow"}},
 )
-
-# Style the body
-mtl.apply_table_property(table, {"text_props": {"ha": "right"}})
-
 plt.show()
 ```
 
-## Key concepts
-
-### SpanCell
-
-A `SpanCell` overlays a rectangular region of existing table cells.  It
-automatically updates its position and size when the underlying anchor cells
-move -- no manual bookkeeping needed.
-
-```python
-span = mtl.add_table_multispan_cell(table, (2, 0), width=3, height=1, text="Total")
-span.set_facecolor("lightgrey")
-```
-
-### Header span resolution
-
-`resolve_header_spans` analyzes a `pd.MultiIndex` and returns `HeaderSpan`
-objects describing which columns should be merged at each level:
-
-```python
-spans, n_levels = mtl.resolve_header_spans(columns)
-for s in spans:
-    print(f"Level {s.level}: '{s.label}' cols {s.start_col}-{s.end_col}")
-```
-
-### Property dictionaries
+## Property dictionaries
 
 All `apply_table_*` functions accept a property dictionary:
 
@@ -89,3 +81,5 @@ All `apply_table_*` functions accept a property dictionary:
 | `visible_edges` | Sets `cell.visible_edges` |
 | `custom_modifiers` | List of callables invoked with the cell |
 | Any other key | Forwarded to `cell.set(**kwargs)` |
+
+See the [Examples](generated/gallery) gallery for focused demonstrations of each feature.
