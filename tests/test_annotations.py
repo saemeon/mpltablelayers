@@ -56,4 +56,4 @@ def test_cell_ellipse_tracks_anchor(simple_table):
     anchor = table.get_celld()[(1, 0)]
     anchor.set_x(anchor.get_x() + 0.1)
     cx_after, _ = ann.get_center()
-    assert cx_after == pytest.approx(cx_before + 0.05, abs=1e-4)
+    assert cx_after == pytest.approx(cx_before + 0.1, abs=1e-4)

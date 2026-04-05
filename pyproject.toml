@@ -72,6 +72,20 @@ include = ["src"]
 
 [tool.ty.rules]
 unresolved-import = "warn"
+# matplotlib stubs are incomplete (width_inch, get_renderer, canvas, etc.)
+unresolved-attribute = "warn"
+# **kwargs unpacking and matplotlib stub gaps cause false positives
+invalid-argument-type = "warn"
+# dynamic attribute setting in interceptor_registry
+invalid-assignment = "warn"
+# dynamic callable patterns in interceptor_registry
+call-non-callable = "warn"
+# TypeAlias | syntax flagged for py39 target but works with __future__
+unsupported-operator = "warn"
+# matplotlib return type stub mismatches
+invalid-return-type = "warn"
+# Cell.__getitem__ override in utils
+invalid-method-override = "warn"
 
 [tool.ruff]
 line-length = 88

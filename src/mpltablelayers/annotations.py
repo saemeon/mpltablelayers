@@ -91,6 +91,8 @@ class CellEllipse(Ellipse):
             pass_kwargs=True,
         )
 
+        self.update_bounds()
+
     def update_bounds(self) -> None:
         """Recompute the ellipse centre and axes from the anchor cells."""
         x0 = self._cell_x0y0.get_x()
