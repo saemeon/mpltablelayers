@@ -24,9 +24,7 @@ def simple_table():
 
 
 def test_apply_table_cell_property_facecolor(simple_table):
-    mpltablelayers.apply_table_cell_property(
-        simple_table, 0, 0, {"facecolor": "green"}
-    )
+    mpltablelayers.apply_table_cell_property(simple_table, 0, 0, {"facecolor": "green"})
     cell = simple_table.get_celld()[(0, 0)]
     assert cell.get_facecolor()[:3] == pytest.approx((0.0, 0.5019, 0.0), abs=0.01)
 
@@ -35,18 +33,14 @@ def test_apply_table_row_property_all_cells(simple_table):
     mpltablelayers.apply_table_row_property(simple_table, 1, {"facecolor": "#ff0000"})
     for (r, c), cell in simple_table.get_celld().items():
         if r == 1:
-            assert cell.get_facecolor()[:3] == pytest.approx(
-                (1.0, 0.0, 0.0), abs=1e-3
-            )
+            assert cell.get_facecolor()[:3] == pytest.approx((1.0, 0.0, 0.0), abs=1e-3)
 
 
 def test_apply_table_col_property_all_cells(simple_table):
     mpltablelayers.apply_table_col_property(simple_table, 0, {"facecolor": "#0000ff"})
     for (r, c), cell in simple_table.get_celld().items():
         if c == 0:
-            assert cell.get_facecolor()[:3] == pytest.approx(
-                (0.0, 0.0, 1.0), abs=1e-3
-            )
+            assert cell.get_facecolor()[:3] == pytest.approx((0.0, 0.0, 1.0), abs=1e-3)
 
 
 def test_apply_table_range_property(simple_table):

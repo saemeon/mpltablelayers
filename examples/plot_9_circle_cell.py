@@ -48,7 +48,7 @@ mpltablelayers.add_table_cell_annotation(
     y0x0=(4, 1),
     width=1,
     height=2,
-    circle=False,           # ellipse — taller than wide
+    circle=False,  # ellipse — taller than wide
     edgecolor="#2980b9",
     linewidth=2,
     padding=0.03,

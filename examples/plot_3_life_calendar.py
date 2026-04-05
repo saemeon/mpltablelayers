@@ -108,13 +108,3 @@ ax.annotate(
 )
 
 _ = plt.tight_layout()
-
-# %%
-import matplotlib.pyplot as plt
-import pandas as pd
-
-dates = pd.bdate_range(start="2020-01-01", end="2020-01-14", freq="C")
-data = pd.DataFrame({"Value": range(len(dates))}, index=dates)
-plt.figure(figsize=(10, 5))
-plt.plot(data.index, data["Value"])
-plt.show()

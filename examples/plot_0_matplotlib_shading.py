@@ -107,13 +107,22 @@ scores_hdr.set_text_props(
 
 # ── Layer 4: ellipse annotation calling out Dave's Math score (95) ───────────
 # Row 0=title, row 1=col labels, rows 2–9=data → Dave is row 5, Math is col 1
-ann = add_table_cell_annotation(table, y0x0=(5, 1), edgecolor="#c0392b", linewidth=2.5, padding=0)
+ann = add_table_cell_annotation(
+    table, y0x0=(5, 1), edgecolor="#c0392b", linewidth=2.5, padding=0
+)
 ax.annotate(
-    "Top score!", xy=(1, 0.5), xycoords=ann,
-    xytext=(1.05, 0.45), textcoords="axes fraction",
-    color="#c0392b", fontsize=8, weight="bold",
+    "Top score!",
+    xy=(1, 0.5),
+    xycoords=ann,
+    xytext=(1.05, 0.45),
+    textcoords="axes fraction",
+    color="#c0392b",
+    fontsize=8,
+    weight="bold",
     annotation_clip=False,
-    arrowprops=dict(arrowstyle="->", color="#c0392b", lw=1.5, connectionstyle="arc3,rad=0.3"),
+    arrowprops=dict(
+        arrowstyle="->", color="#c0392b", lw=1.5, connectionstyle="arc3,rad=0.3"
+    ),
 )
 
 _ = plt.tight_layout()

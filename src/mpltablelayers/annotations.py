@@ -85,7 +85,10 @@ class CellEllipse(Ellipse):
             cell_x0y0.set_figure, self.set_figure, pass_args=True, pass_kwargs=True
         )
         register_method_interceptor(
-            cell_x0y0.set_transform, self.set_transform, pass_args=True, pass_kwargs=True
+            cell_x0y0.set_transform,
+            self.set_transform,
+            pass_args=True,
+            pass_kwargs=True,
         )
 
     def update_bounds(self) -> None:
@@ -224,6 +227,7 @@ def add_plottable_cell_annotation(
     matplotlib.patches.Ellipse
         The annotation patch, already added to ``tab.ax``.
     """
+
     def _get_cell(r, c):
         if r == -1:
             label_cells = {cell.col_idx: cell for cell in tab.col_label_row.cells}

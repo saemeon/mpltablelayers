@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import functools
 import itertools
 import logging
@@ -9,7 +11,9 @@ from types import MethodType
 _logger = logging.getLogger(__name__)
 
 
-def _trigger_hook(obj, hook_func, pass_obj, pass_args, pass_kwargs, *args, **kwargs) -> None:
+def _trigger_hook(
+    obj, hook_func, pass_obj, pass_args, pass_kwargs, *args, **kwargs
+) -> None:
     """Execute a hook function with selectively forwarded arguments.
 
     Parameters
@@ -47,7 +51,7 @@ def _trigger_hook(obj, hook_func, pass_obj, pass_args, pass_kwargs, *args, **kwa
 
 
 def _call_if_is_callable(obj):
-    """Call `obj` if it is callable and return it's return value, otherwise return it unchanged."""
+    """Call `obj` if callable and return its value, else unchanged."""
     if callable(obj):
         return obj()
     return obj
@@ -114,13 +118,17 @@ def call_method_with_hooks(obj, method, registry_key, *args, **kwargs):
     all_hooks = obj._registered_interceptors[registry_key].values()
 
     # callorder may be a callable
-    processed_hooks = [tuple(hook[:-1]) + (_call_if_is_callable(hook[-1]),) for hook in all_hooks]
+    processed_hooks = [
+        tuple(hook[:-1]) + (_call_if_is_callable(hook[-1]),) for hook in all_hooks
+    ]
     sorted_hooks = sorted(processed_hooks, key=lambda x: x[-1])
 
     with ExitStack() as stack:
         for hook_func, pass_obj, pass_args, pass_kwargs, order in sorted_hooks:
             if order < 0:
-                maybe_cm = _trigger_hook(obj, hook_func, pass_obj, pass_args, pass_kwargs, *args, **kwargs)
+                maybe_cm = _trigger_hook(
+                    obj, hook_func, pass_obj, pass_args, pass_kwargs, *args, **kwargs
+                )
                 if _is_context_manager(maybe_cm):
                     stack.enter_context(maybe_cm)
 
@@ -128,7 +136,9 @@ def call_method_with_hooks(obj, method, registry_key, *args, **kwargs):
 
         for hook_func, pass_obj, pass_args, pass_kwargs, order in sorted_hooks:
             if order >= 0:
-                maybe_cm = _trigger_hook(obj, hook_func, pass_obj, pass_args, pass_kwargs, *args, **kwargs)
+                maybe_cm = _trigger_hook(
+                    obj, hook_func, pass_obj, pass_args, pass_kwargs, *args, **kwargs
+                )
                 if _is_context_manager(maybe_cm):
                     stack.enter_context(maybe_cm)
 
@@ -258,7 +268,13 @@ def register_method_interceptor(
         setattr(obj, method.__name__, wrapped.__get__(obj, type(obj)))
 
     id = next(obj._registered_interceptors_id_gen)
-    obj._registered_interceptors[registry_key][id] = (func, pass_self, pass_args, pass_kwargs, callorder)
+    obj._registered_interceptors[registry_key][id] = (
+        func,
+        pass_self,
+        pass_args,
+        pass_kwargs,
+        callorder,
+    )
 
     _logger.debug(f"Register '{func}' to  'obj.{method.__name__}' on obj '{obj}'.")
 
@@ -282,7 +298,10 @@ def deregister_method_interceptor(method, id) -> None:
 
     Examples
     --------
-    >>> from  interceptor_registry import register_method_interceptor, deregister_method_interceptor
+    >>> from interceptor_registry import (
+    ...     register_method_interceptor,
+    ...     deregister_method_interceptor,
+    ... )
 
     >>> class Foo:
     ...     def bar(self):

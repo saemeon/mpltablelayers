@@ -1,4 +1,6 @@
-"""Compatibility helpers for `plottable <https://github.com/znstrider/plottable>`_ tables.
+"""Compatibility helpers for plottable_ tables.
+
+.. _plottable: https://github.com/znstrider/plottable
 
 plottable cells are positioned once at construction time and expose no
 ``set_x`` / ``set_y`` methods, so the interceptor-based :class:`SpanCell`
@@ -76,6 +78,7 @@ def add_plottable_multispan_cell(
     repositioned, this function must be called **after** ``plottable.Table``
     has been fully constructed.
     """
+
     def _get_cell(r, c):
         if r == -1:
             label_cells = {cell.col_idx: cell for cell in tab.col_label_row.cells}

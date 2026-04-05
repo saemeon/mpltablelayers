@@ -1,5 +1,13 @@
 # API Reference
 
+## Header resolution
+
+::: mpltablelayers.HeaderSpan
+
+::: mpltablelayers.resolve_header_spans
+
+::: mpltablelayers.add_hierarchical_header
+
 ## Span cells
 
 ::: mpltablelayers.add_table_multispan_cell
@@ -19,6 +27,8 @@
 ::: mpltablelayers.CellEllipse
 
 ## Cell styling
+
+::: mpltablelayers.apply_table_property
 
 ::: mpltablelayers.apply_table_cell_property
 

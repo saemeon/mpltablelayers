@@ -39,9 +39,7 @@ def test_cell_ellipse_is_ellipse_subclass(simple_table):
 
 def test_cell_ellipse_edgecolor(simple_table):
     table, ax, fig = simple_table
-    ann = mpltablelayers.add_table_cell_annotation(
-        table, y0x0=(1, 0), edgecolor="blue"
-    )
+    ann = mpltablelayers.add_table_cell_annotation(table, y0x0=(1, 0), edgecolor="blue")
     assert ann.get_edgecolor()[:3] == pytest.approx((0.0, 0.0, 1.0), abs=1e-3)
 
 

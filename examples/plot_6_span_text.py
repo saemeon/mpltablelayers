@@ -28,7 +28,7 @@ ax.axis("off")
 
 # Row 0: group header; row 1: column labels; rows 2–5: data
 cell_text = [
-    [""] * 5,               # placeholder — will be replaced by span
+    [""] * 5,  # placeholder — will be replaced by span
     df.columns.tolist(),
     *df.values.tolist(),
 ]
@@ -51,7 +51,9 @@ title = mpltablelayers.add_table_multispan_cell(
     text="Academic Results — Spring Semester",
     loc="center",
 )
-title.set_text_props(color="white", weight="bold", fontsize=11, ha="center", va="center")
+title.set_text_props(
+    color="white", weight="bold", fontsize=11, ha="center", va="center"
+)
 
 # ── Span text: "Subjects" sub-header spanning cols 1–4 (row 1) ───────────────
 for c in range(1, 5):
@@ -68,6 +70,8 @@ subjects = mpltablelayers.add_table_multispan_cell(
     text="Subjects",
     loc="center",
 )
-subjects.set_text_props(color="white", weight="bold", fontsize=9, ha="center", va="center")
+subjects.set_text_props(
+    color="white", weight="bold", fontsize=9, ha="center", va="center"
+)
 
 _ = plt.tight_layout()

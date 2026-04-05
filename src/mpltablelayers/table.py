@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable, Sequence
+from dataclasses import dataclass
 from typing import Any, TypeAlias
 
 import matplotlib.pyplot as plt
@@ -21,13 +22,17 @@ from .interceptor_registry import register_method_interceptor
 from .utils import get_text_bbox, requires_usetex, separate_kwargs
 
 __all__ = [
-    "make_table",
+    "HeaderSpan",
+    "SpanCell",
+    "add_hierarchical_header",
     "add_table_multispan_cell",
     "apply_table_cell_property",
     "apply_table_col_property",
+    "apply_table_property",
     "apply_table_range_property",
     "apply_table_row_property",
-    "SpanCell",
+    "make_table",
+    "resolve_header_spans",
 ]
 
 _logger = logging.getLogger(__name__)
@@ -50,6 +55,36 @@ to provide a `to_list()` method.
 
 linewidth = 1
 linewidth_bottom = 1
+
+
+@dataclass
+class HeaderSpan:
+    """A resolved span group within a hierarchical header.
+
+    Represents a contiguous range of columns at a specific header level
+    that share the same label and should be visually merged.
+
+    Attributes
+    ----------
+    level : int
+        Header level index (0 = topmost).
+    label : str
+        The header label text.
+    start_col : int
+        First column index (inclusive).
+    end_col : int
+        Last column index (inclusive).
+    """
+
+    level: int
+    label: str
+    start_col: int
+    end_col: int
+
+    @property
+    def width(self) -> int:
+        """Number of columns this span covers."""
+        return self.end_col - self.start_col + 1
 
 
 class SpanCell(Cell):
@@ -99,7 +134,8 @@ class SpanCell(Cell):
         self.set_transform(table.get_transform())
         self._table.get_figure().add_artist(self)
 
-        # Register interceptors on all relevant anchor-cell-methods required to track the moving of the anchor cells
+        # Register interceptors on all relevant anchor-cell-methods
+        # required to track the moving of the anchor cells
         register_method_interceptor(self._cell_x0y0.set_x, self.update_bounds)
         register_method_interceptor(self._cell_x0y0.set_y, self.update_bounds)
         register_method_interceptor(self._cell_x1y1.set_x, self.update_bounds)
@@ -185,8 +221,9 @@ def _int_or_indexpos(
 def _list_index_strict(lst, value):
     """Find the index of an element in a list.
 
-    Compared to `lst.index(value)` this function does not only compare by `==` but also
-    the type. This is relevant to get the first position of 0 in a list with False values.
+    Compared to `lst.index(value)` this function does not only compare
+    by `==` but also the type. This is relevant to get the first
+    position of 0 in a list with False values.
     """
     return next(i for i, v in enumerate(lst) if v == value and type(v) is type(value))
 
@@ -342,6 +379,24 @@ def _merge_with_defaults(defaults: dict, user: dict | None) -> dict:
 
     text_props = {**defaults.pop("text_props", {}), **user.pop("text_props", {})}
     return {**defaults, **user, "text_props": text_props}
+
+
+def apply_table_property(
+    table: Table,
+    property_dict: dict,
+) -> None:
+    """
+    Apply a property dictionary to every cell in the table.
+
+    Parameters
+    ----------
+    table : matplotlib.table.Table
+    property_dict : dict
+        See `apply_table_cell_property` for supported keys.
+    """
+    property_applier = _construct_property_applier(**property_dict)
+    for cell in table.get_celld().values():
+        property_applier(cell)
 
 
 def apply_table_cell_property(
@@ -538,7 +593,7 @@ def make_table(
         Target axes. If None, a new figure and axes are created
         with automatic figsize.
 
-    title_rows : Sequence[tuple[row, str] | tuple[row, str, PropertyDict]] | None, optional
+    title_rows : Sequence[tuple] | None, optional
         Insert full-width title rows before the specified data row.
 
         Each entry must be:
@@ -614,7 +669,7 @@ def make_table(
         plt.make_table(df, break_header_span=[("A", "L2")])
         ```
 
-    span_cells : Sequence[tuple[row_col, width, height] | tuple[row_col, width, height, PropertyDict]] | None, optional
+    span_cells : Sequence[tuple] | None, optional
         Additional span cells.
 
         Each entry must be:
@@ -674,7 +729,7 @@ def make_table(
         ```
 
 
-    cell_properties : Sequence[tuple[row_col | Sequence[row_col], PropertyDict]] | None, optional
+    cell_properties : Sequence[tuple] | None, optional
         Cell-level styling.
 
         Each entry must be:
@@ -747,14 +802,30 @@ def make_table(
 
     Each property dictionary may contain the following keys:
 
-    | Property | Description |
-    |-----------|------------|
-    | `text_props` | Forwards text styling to `cell.set_text_props(**text_props)`.<br>Example: `{"text_props": {"weight": "bold", "ha": "right"}}` |
-    | `pad` | Sets internal cell padding via `cell.PAD = pad`.<br>Example: `{"pad": 0.2}` |
-    | `height_scaling` | Multiplies the current cell height using `cell.set_height(cell.get_height() * x)`.<br>Example: `{"height_scaling": 1.4}` |
-    | `visible_edges` | Controls which cell borders are visible via `cell.visible_edges`.<br>Example: `{"visible_edges": "L"}` |
-    | `custom_modifiers` | Executes one or more callables on the cell after other properties are applied.<br>Example: `{"custom_modifiers": [lambda c: c.set_edgecolor("red")]}` |
-    | Any other keyword | Forwarded directly to `cell.set(**kwargs)` and therefore supports all native `matplotlib.table.Cell` properties. For the complete list of supported properties, refer to https://matplotlib.org/stable/api/table_api.html#matplotlib.table.Cell.set. <br>Example: `{"facecolor": "lightgrey", "linewidth": 0.8}` |
+    ``text_props``
+        Forwards text styling to
+        ``cell.set_text_props(**text_props)``.
+        Example: ``{"text_props": {"weight": "bold"}}``
+    ``pad``
+        Sets internal cell padding via ``cell.PAD = pad``.
+        Example: ``{"pad": 0.2}``
+    ``height_scaling``
+        Multiplies the current cell height using
+        ``cell.set_height(cell.get_height() * x)``.
+        Example: ``{"height_scaling": 1.4}``
+    ``visible_edges``
+        Controls which cell borders are visible via
+        ``cell.visible_edges``.
+        Example: ``{"visible_edges": "L"}``
+    ``custom_modifiers``
+        Executes one or more callables on the cell after
+        other properties are applied.
+        Example: ``{"custom_modifiers": [lambda c: ...]}``
+    Any other keyword
+        Forwarded directly to ``cell.set(**kwargs)`` and
+        therefore supports all native
+        ``matplotlib.table.Cell`` properties.
+        Example: ``{"facecolor": "lightgrey"}``
 
     Header Spanning Behaviour
     -------------------------
@@ -767,7 +838,8 @@ def make_table(
         respects hierarchical boundaries.
     - The lowest header level never spans;
     - `break_header_span` specifies column keys where a span should be
-      explicitly broken. **Important**: The span is broken *to the left* of the specified column.
+      explicitly broken. **Important**: The span is broken
+      *to the left* of the specified column.
 
     Notes
     -----
@@ -775,17 +847,20 @@ def make_table(
         - When used as a column reference, -1 refers to the index column.
         - When used as a row reference, negative integers refer to header rows,
           where -1 denotes the header row closest to the table body.
-    - Strings refer to label-based references from the original DataFrame index or columns.
+    - Strings refer to label-based references from the original
+      DataFrame index or columns.
     - Passed property dictionaries override sensible defaults.
     - Most parameters that accept row, column, cell, or span selectors support
       multiple elements. A selector may be provided either as a single element
       or as a sequence of elements. When a sequence is provided, the specified
-      operation or styling is applied to all referenced rows, columns, or cells._property)
+      operation or styling is applied to all referenced
+      rows, columns, or cells._property)
     """
     assert not isinstance(df.index, pd.MultiIndex), (
         "Currently no support for MultiIndex in the Rows"
     )
-    # Catch all function input in raw version. This MUST be at the beginning of the funciton.
+    # Catch all function input in raw version.
+    # This MUST be at the beginning of the function.
     raw_fuction_inputs = locals().copy()
 
     # If no ax is passed, we create a figure in a reasonable size
@@ -864,8 +939,9 @@ def make_table(
     df = df.copy()
 
     # list that initially stores all column pos as int. Later we insert elements into
-    # this list, which moves these integers and allows to compare value vs list.index(value)
-    # to find the position of a column in the original dataframe in the new dataframe
+    # this list, which moves these integers and allows to compare
+    # value vs list.index(value) to find the position of a column
+    # in the original dataframe in the new dataframe
     original_column_mapping = list(range(len(df.columns)))
 
     def get_rowindex(items, original_index_mapping) -> list:
@@ -883,7 +959,8 @@ def make_table(
             # negative values refer to the header rows and are not part of the dataframe
             if item < 0:
                 assert -item <= n_header_levels, (
-                    f"You tried to use index {item}, however, there are only {n_header_levels} header levels. "
+                    f"You tried to use index {item}, however, "
+                    f"there are only {n_header_levels} header levels. "
                 )
                 item_idx = n_header_levels + item
 
@@ -1029,7 +1106,8 @@ def make_table(
         if row in _ensure_list(bold_header_levels):
             cell.set_text_props(weight="bold")
 
-        # no vertical line for row-label column and for merged header cells (sets text = "")
+        # no vertical line for row-label column and for
+        # merged header cells (sets text = "")
         if col == -1 or cell.get_text().get_text() == "":
             cell.visible_edges = ""
         else:
@@ -1215,3 +1293,262 @@ def _build_header_rows(df: pd.DataFrame, header_spanning: bool, break_header_spa
         n_header_levels = 1
 
     return header_rows, n_header_levels
+
+
+def resolve_header_spans(
+    columns: pd.Index | pd.MultiIndex,
+    *,
+    spanning: bool = True,
+    break_span: col | Sequence[col] | None = None,
+    empty_col_prefix: str = "_emptycol",
+) -> tuple[list[HeaderSpan], int]:
+    """Analyze a column index and resolve header span groups.
+
+    For a ``MultiIndex``, identifies groups of adjacent columns that share
+    the same label at each level and should be visually merged.  Respects
+    hierarchical boundaries: a parent-level label change always breaks
+    child-level spans.
+
+    Parameters
+    ----------
+    columns : pd.Index | pd.MultiIndex
+        The column index to analyze.
+    spanning : bool, default True
+        Whether to merge adjacent identical labels into spans.
+        When False, every column produces its own single-width span.
+    break_span : col | Sequence[col] | None, optional
+        Column keys where spanning should be explicitly broken.
+        The break occurs *to the left* of the specified column.
+    empty_col_prefix : str, default "_emptycol"
+        Column label prefix identifying layout-only spacer columns.
+        Columns matching this prefix are excluded from spans but do not
+        break them; a span may visually cover the gap.
+
+    Returns
+    -------
+    spans : list[HeaderSpan]
+        Resolved span groups, ordered by level then by column position.
+    n_levels : int
+        Number of header levels.
+
+    Examples
+    --------
+    >>> idx = pd.MultiIndex.from_tuples([
+    ...     ("A", "x"), ("A", "y"), ("B", "x"), ("B", "y"),
+    ... ])
+    >>> spans, n = resolve_header_spans(idx)
+    >>> [(s.label, s.start_col, s.width) for s in spans if s.width > 1]
+    [('A', 0, 2), ('B', 2, 2)]
+    """
+    break_span = _ensure_list(break_span) if break_span is not None else []
+    break_keys = set(_expand_indexlike_types(break_span))
+
+    def _is_empty_col(label) -> bool:
+        return isinstance(label, str) and label.startswith(empty_col_prefix)
+
+    # Single-level index: one span per column, no merging
+    if not isinstance(columns, pd.MultiIndex):
+        spans = []
+        for j, label in enumerate(columns):
+            if _is_empty_col(label):
+                continue
+            spans.append(HeaderSpan(level=0, label=str(label), start_col=j, end_col=j))
+        return spans, 1
+
+    n_levels = columns.nlevels
+    col_tuples = list(columns)
+    level_values = [columns.get_level_values(lvl).tolist() for lvl in range(n_levels)]
+    emptycol_mask = [_is_empty_col(t[0]) for t in col_tuples]
+
+    spans: list[HeaderSpan] = []
+
+    for level in range(n_levels):
+        values = level_values[level]
+        is_spannable = level < n_levels - 1 and spanning
+
+        current_label = None
+        current_start = None
+        current_end = None
+        prev_non_empty_j = None
+
+        for j in range(len(values)):
+            if emptycol_mask[j]:
+                continue
+
+            should_start_new = False
+
+            if current_label is None:
+                should_start_new = True
+            elif not is_spannable:
+                should_start_new = True
+            elif values[j] != current_label:
+                should_start_new = True
+            elif col_tuples[j] in break_keys:
+                should_start_new = True
+            elif level > 0 and prev_non_empty_j is not None:
+                for parent in range(level):
+                    if (
+                        level_values[parent][j]
+                        != level_values[parent][prev_non_empty_j]
+                    ):
+                        should_start_new = True
+                        break
+
+            if should_start_new:
+                if current_label is not None:
+                    spans.append(
+                        HeaderSpan(
+                            level,
+                            str(current_label),
+                            current_start,
+                            current_end,
+                        )
+                    )
+                current_start = j
+                current_label = values[j]
+
+            current_end = j
+            prev_non_empty_j = j
+
+        if current_label is not None:
+            spans.append(
+                HeaderSpan(level, str(current_label), current_start, current_end)
+            )
+
+    return spans, n_levels
+
+
+def add_hierarchical_header(
+    table: Table,
+    columns: pd.Index | pd.MultiIndex,
+    *,
+    start_row: int = 0,
+    start_col: int = 0,
+    spanning: bool = True,
+    break_span: col | Sequence[col] | None = None,
+    empty_col_prefix: str = "_emptycol",
+    default_properties: PropertyDict | None = None,
+    level_properties: dict[int, PropertyDict] | None = None,
+    label_properties: dict[str, PropertyDict] | None = None,
+) -> list[SpanCell]:
+    """Construct a hierarchical header on a table using SpanCells.
+
+    Analyzes the column index to find span groups via
+    `resolve_header_spans`, then creates a `SpanCell` for each
+    multi-column group.  Single-column entries are left as regular
+    cells (no SpanCell needed).
+
+    Styling is resolved in priority order (lowest wins):
+    ``default_properties`` < ``level_properties`` < ``label_properties``.
+
+    Parameters
+    ----------
+    table : Table
+        The matplotlib table to add header spans to.  The table must
+        already contain cells at the positions covered by the header.
+    columns : pd.Index | pd.MultiIndex
+        Column index defining the header structure.
+    start_row : int, default 0
+        Table row index where the topmost header level is placed.
+    start_col : int, default 0
+        Table column index corresponding to the first data column.
+    spanning : bool, default True
+        Whether to merge adjacent identical labels.
+    break_span : col | Sequence[col] | None, optional
+        Column keys where spanning should be explicitly broken.
+    empty_col_prefix : str, default "_emptycol"
+        Prefix for layout-only spacer columns.
+    default_properties : PropertyDict | None, optional
+        Default styling applied to every created SpanCell.
+        Supports the same keys as ``apply_table_cell_property``.
+    level_properties : dict[int, PropertyDict] | None, optional
+        Per-level styling.  Keys are level indices (0 = topmost).
+        Merged on top of *default_properties*.
+    label_properties : dict[str, PropertyDict] | None, optional
+        Per-label styling.  Keys are label strings.
+        Merged on top of level and default properties.
+
+    Returns
+    -------
+    list[SpanCell]
+        The created SpanCell instances, one per multi-column span.
+
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt
+    >>> idx = pd.MultiIndex.from_tuples([
+    ...     ("Group A", "x"), ("Group A", "y"),
+    ...     ("Group B", "x"), ("Group B", "y"),
+    ... ])
+    >>> fig, ax = plt.subplots()
+    >>> table = ax.table(
+    ...     cellText=[[""] * 4] * 3,
+    ...     loc="center",
+    ... )
+    >>> spans = add_hierarchical_header(
+    ...     table, idx,
+    ...     default_properties={"facecolor": "lightblue"},
+    ...     level_properties={0: {"text_props": {"weight": "bold"}}},
+    ...     label_properties={"Group A": {"facecolor": "salmon"}},
+    ... )
+    """
+    header_spans, _ = resolve_header_spans(
+        columns,
+        spanning=spanning,
+        break_span=break_span,
+        empty_col_prefix=empty_col_prefix,
+    )
+
+    default_properties = default_properties or {}
+    level_properties = level_properties or {}
+    label_properties = label_properties or {}
+
+    span_cells: list[SpanCell] = []
+
+    for span in header_spans:
+        if span.width < 2:
+            continue
+
+        table_row = start_row + span.level
+        table_col = start_col + span.start_col
+
+        # Resolve styling: defaults < level < label
+        props = _merge_with_defaults(
+            _merge_with_defaults(default_properties, level_properties.get(span.level)),
+            label_properties.get(span.label),
+        )
+
+        # Separate property-applier keys from Cell/set kwargs
+        text_props = props.pop("text_props", {})
+        pad = props.pop("pad", None)
+        height_scaling = props.pop("height_scaling", None)
+        visible_edges = props.pop("visible_edges", None)
+        custom_modifiers = props.pop("custom_modifiers", None)
+
+        span_cell = add_table_multispan_cell(
+            table,
+            (table_row, table_col),
+            span.width,
+            1,
+            text=span.label,
+            **props,
+        )
+
+        if text_props:
+            span_cell.set_text_props(**text_props)
+        if pad is not None:
+            span_cell.PAD = pad
+        if visible_edges is not None:
+            span_cell.visible_edges = visible_edges
+        if height_scaling is not None:
+            for col_offset in range(span.width):
+                cell = table.get_celld().get((table_row, table_col + col_offset))
+                if cell is not None:
+                    cell.set_height(cell.get_height() * height_scaling)
+        if custom_modifiers:
+            for modifier in _ensure_list(custom_modifiers):
+                modifier(span_cell)
+
+        span_cells.append(span_cell)
+
+    return span_cells
